@@ -1,4 +1,5 @@
 Simple Calculator using ATmega32
+
 This project demonstrates the core functionalities of basic arithmetic operations: addition, subtraction, multiplication, and division.
 The calculator accepts inputs from the keypad, processes the data using the ATmega32 microcontroller, and displays the results on a 16x2 LCD.
 Each keypress is interpreted by the microcontroller to perform the required arithmetic operation. 
