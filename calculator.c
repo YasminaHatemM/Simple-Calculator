@@ -48,30 +48,12 @@ ISR(INT1_vect) {
 
 	//delete a char from the second number
 	else if (operator != 0 && flag_next_num == 1) { second /= 10;}
+	else if (operator != 0 && flag_next_num == 0) {operator = 0;}
 	count--;
 	LCD_moveCursor(0, count);
 	LCD_displayCharacter(' ');
 	_delay_ms(40);
 	LCD_moveCursor(0, count);
-
-	//delete the operator
-	if (operator != 0 && flag_next_num == 0) {
-		LCD_moveCursor(0, count);
-		LCD_displayCharacter(' ');
-		_delay_ms(40);
-		LCD_moveCursor(0, count);
-		_delay_ms(40);
-		operator = KEYPAD_getPressedKey();
-		LCD_displayCharacter(operator);
-		_delay_ms(40);
-		input =KEYPAD_getPressedKey();
-		second = second * 10 + (input - '0');
-		LCD_displayCharacter(input);
-		flag_next_num = 1;
-		count++;
-		_delay_ms(40);
-		input = KEYPAD_getPressedKey();
-	}
 }
 
 int main(void) {
@@ -120,11 +102,13 @@ int main(void) {
 		}
 
 		//print the operator
-		LCD_displayCharacter(operator);
-		_delay_ms(40);
-		count++;
-		input = KEYPAD_getPressedKey();
-
+		while((input == '+') | (input == '-') | (input == '*') | (input == '/')) {
+			operator = input;
+			LCD_displayCharacter(operator);
+			count++;
+			_delay_ms(40);
+			input = KEYPAD_getPressedKey();
+		}
 		if (input == 'C') {
 			LCD_clearScreen();
 			_delay_ms(40);
