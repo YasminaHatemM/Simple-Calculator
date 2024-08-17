@@ -164,6 +164,8 @@ int main(void) {
 			LCD_moveCursor(1, 0);
 			LCD_displayString("Please,try again.");
 			_delay_ms(40);
+			input = KEYPAD_getPressedKey();
+			if ((input != '+') && (input != '-') && (input != '*')&& (input != '/')) {LCD_clearScreen();}
 			continue;
 		} else if (flag_no_sec) {
 			flag_no_sec = 0;
