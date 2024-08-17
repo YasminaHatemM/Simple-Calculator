@@ -5,8 +5,8 @@
 #include "lcd.h"
 #include "DIO_Interface.h"
 
-u8 count = 0, operator = 0, input, flag_div = 0, flag_first = 0,
-		flag_no_sec = 0, flag_next_num = 0;
+u8 count1 = 0, count2 = 0, operator = 0, input, flag_div = 0, flag_first = 0,
+		flag_no_sec = 0, flag_next_num = 0, flag_op = 0;
 u16 result = 0, first = 0, second = 0;
 
 u16 operation(u16 first, u16 second, u8 operand) {
@@ -43,17 +43,32 @@ void Interrupt_init(void) {
 
 //interrupt to delete a character
 ISR(INT1_vect) {
-	//delete a char from the first number
-	if (operator == 0) {first /= 10;}
 
+	//delete a char from the first number
+	if (operator == 0) {
+		first /= 10;
+		count1--;
+		LCD_moveCursor(0, count1);
+		LCD_displayCharacter(' ');
+		_delay_ms(40);
+		LCD_moveCursor(0, count1);
+	}
 	//delete a char from the second number
-	else if (operator != 0 && flag_next_num == 1) { second /= 10;}
-	else if (operator != 0 && flag_next_num == 0) {operator = 0;}
-	count--;
-	LCD_moveCursor(0, count);
-	LCD_displayCharacter(' ');
-	_delay_ms(40);
-	LCD_moveCursor(0, count);
+	else if (count2 > 0 && second > 0) {
+		second /= 10;
+		count2--;
+		LCD_moveCursor(1, count2);
+		LCD_displayCharacter(' ');
+		_delay_ms(40);
+		LCD_moveCursor(1, count2);
+	}
+	else if (second == 0 && operator != 0) {
+		flag_op = 1;
+		LCD_moveCursor(1, 0);
+		LCD_displayCharacter(' ');
+		_delay_ms(40);
+		LCD_moveCursor(1, 0);
+	}
 }
 
 int main(void) {
@@ -71,18 +86,20 @@ int main(void) {
 			_delay_ms(40);
 		} else {
 			input = KEYPAD_getPressedKey();
-			count = 0, first = 0, second = 0, operator = 0;
+			count1 = 0, second = 0, operator = 0;
+			if (flag_op) {}
+			else {first = 0;	}
 			while ((input != '+') && (input != '-') && (input != '*') && (input != '/') && (input != '=')) {
 				if (input == 'C') {
 					LCD_clearScreen();
 					_delay_ms(40);
 					first = 0;
-					count = 0;
+					count1 = 0;
 				} else {
 					first = first * 10 + (input - '0');
 					LCD_displayCharacter(input);
 					_delay_ms(40);
-					count++;
+					count1++;
 				}
 				input = KEYPAD_getPressedKey();
 			}
@@ -96,26 +113,35 @@ int main(void) {
 			LCD_intgerToString(result);
 			_delay_ms(40);
 			input = KEYPAD_getPressedKey();
-			if ((input == '+') | (input == '-') | (input == '*') | (input == '/')) {flag_first = 1;}
-			else if ((input != '+') && (input != '-') && (input != '*') && (input != '/')){LCD_clearScreen();}
+			if ((input == '+') | (input == '-') | (input == '*')
+					| (input == '/')) {
+				flag_first = 1;
+			} else if ((input != '+') && (input != '-') && (input != '*')
+					&& (input != '/')) {
+				LCD_clearScreen();
+			}
 			continue;
 		}
-
+		LCD_moveCursor(1, 0);
+		count2 = 0;
 		//print the operator
-		while((input == '+') | (input == '-') | (input == '*') | (input == '/')) {
+		while ((input == '+') | (input == '-') | (input == '*') | (input == '/')) {
+			LCD_moveCursor(1, 0);
 			operator = input;
 			LCD_displayCharacter(operator);
-			count++;
 			_delay_ms(40);
 			input = KEYPAD_getPressedKey();
 		}
+		flag_op = 0;
+		count2++;
+		LCD_moveCursor(1, 1);
 		if (input == 'C') {
 			LCD_clearScreen();
 			_delay_ms(40);
 			continue;
 		}
 		//print the second number
-		while ((input != '+') && (input != '-') && (input != '*') && (input != '/') && (input != '=')) {
+		while ((input != '+') && (input != '-') && (input != '*')&& (input != '/') && (input != '=')) {
 			if (input == 'C') {
 				flag_no_sec = 1;
 				LCD_clearScreen();
@@ -125,14 +151,12 @@ int main(void) {
 			second = second * 10 + (input - '0');
 			LCD_displayCharacter(input);
 			flag_next_num = 1;
-			count++;
+			count2++;
 			_delay_ms(40);
 			input = KEYPAD_getPressedKey();
-
-
 		}
+		if (flag_op) {continue;}
 		result = operation(first, second, operator);
-
 		if (flag_div) {
 			flag_div = 0;
 			LCD_clearScreen();
@@ -156,6 +180,8 @@ int main(void) {
 			input = KEYPAD_getPressedKey();
 			if ((input != '+') && (input != '-') && (input != '*')&& (input != '/')) {LCD_clearScreen();}
 		}
-		if ((input == '+') | (input == '-') | (input == '*') | (input == '/')) {flag_first = 1;}
+		if ((input == '+') | (input == '-') | (input == '*') | (input == '/')) {
+			flag_first = 1;
+		}
 	}
 }
